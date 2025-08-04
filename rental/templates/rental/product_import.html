@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="bi bi-upload"></i> Import Products</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.csv_file.label_tag }}
+                    {{ form.csv_file }}
+                    <div class="form-text">
+                        Upload a CSV file with product data. Required columns: 
+                        name, sku, category, rental_price, stock, is_rentable
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Import
+                </button>
+                <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

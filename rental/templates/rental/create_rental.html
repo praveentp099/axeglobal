@@ -1,0 +1,795 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">Create Rental Agreement</h1>
+        <a href="{% url 'rental_list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Rentals
+        </a>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0"><i class="bi bi-clipboard-plus me-2"></i> Rental Details</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" id="rental-form" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card mb-4 border-primary">
+                            <div class="card-header bg-light-primary">
+                                <h5 class="mb-0"><i class="bi bi-person me-2"></i> Customer Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <label class="form-label fw-bold">Select Customer</label>
+                                    {{ form.customer }}
+                                    {% if form.customer.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.customer.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-3">
+                                    <a href="{% url 'customer_create' %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-person-plus me-1"></i> Add New Customer
+                                    </a>
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label fw-bold">Start Date</label>
+                                            {{ form.start_date }}
+                                            {% if form.start_date.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.start_date.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label fw-bold">Expected Return Date</label>
+                                            {{ form.expected_return_date }}
+                                            {% if form.expected_return_date.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.expected_return_date.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mt-3">
+                                    <label class="form-label fw-bold">Discount (%)</label>
+                                    <div class="input-group">
+                                        {{ form.discount }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.discount.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.discount.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-light-primary">
+                                <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i> Customer Details</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column justify-content-center">
+                                <div class="text-center mb-3">
+                                    <div class="bg-primary rounded-circle p-4 d-inline-block">
+                                        <i class="bi bi-person fs-1 text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <h4 id="customer-name" class="fw-bold">No customer selected</h4>
+                                    <div id="customer-email" class="text-muted mt-1">-</div>
+                                    <div id="customer-phone" class="text-muted">-</div>
+                                    <div id="customer-discount" class="mt-2">
+                                        <span class="badge bg-primary py-2 px-3">Discount: 0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4 border-primary">
+                    <div class="card-header bg-light-primary">
+                        <h5 class="mb-0"><i class="bi bi-tools me-2"></i> Rented Equipment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="rental-items">
+                            {{ items.management_form }}
+                            {% if items.non_form_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in items.non_form_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            {% for form in items %}
+                            <div class="rental-item-form card mb-3 border" id="item-{{ forloop.counter0 }}">
+                                <div class="card-body">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label class="form-label fw-bold">Product{% if forloop.first %}*{% endif %}</label>
+                                                {{ form.product }}
+                                                {% if form.product.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {% for error in form.product.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label class="form-label fw-bold">Quantity{% if forloop.first %}*{% endif %}</label>
+                                                {{ form.quantity }}
+                                                {% if form.quantity.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {% for error in form.quantity.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label class="form-label fw-bold">Daily Price{% if forloop.first %}*{% endif %}</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">$</span>
+                                                    {{ form.rental_price }}
+                                                </div>
+                                                {% if form.rental_price.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {% for error in form.rental_price.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-end">
+                                            {% if not forloop.first and items.can_delete %}
+                                            {{ form.DELETE }}
+                                            <button type="button" class="btn btn-sm btn-danger remove-item ms-2">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                            {{ form.id }}
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 g-3">
+                                        <div class="col-md-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-box-seam me-2 text-primary"></i>
+                                                <small class="text-muted">In Stock: <span class="stock-count badge bg-secondary">0</span></small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-check-circle me-2 text-success"></i>
+                                                <small class="text-muted">Available: <span class="available-count badge bg-success">0</span></small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-cash-coin me-2 text-warning"></i>
+                                                <small class="text-muted">Item Total: $<span class="item-total fw-bold">0.00</span></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <button type="button" id="add-item" class="btn btn-outline-primary mb-3">
+                            <i class="bi bi-plus-circle me-1"></i> Add Another Item
+                        </button>
+                        
+                        <div class="alert alert-warning" id="no-products-alert" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i> Please add at least one product to the rental.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4 border-primary">
+                            <div class="card-header bg-light-primary">
+                                <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i> Notes</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    {{ form.notes }}
+                                    {% if form.notes.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.notes.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4 border-primary">
+                            <div class="card-header bg-light-primary">
+                                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i> Rental Summary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>Subtotal:</div>
+                                    <div id="subtotal">$0.00</div>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>Discount:</div>
+                                    <div id="discount-amount">$0.00</div>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>VAT (5%):</div>
+                                    <div id="vat-amount">$0.00</div>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold fs-5">
+                                    <div>Total:</div>
+                                    <div id="total-amount" class="text-primary">$0.00</div>
+                                </div>
+                                <div class="mt-2 text-muted small">
+                                    <i class="bi bi-calendar me-1"></i> Rental Duration: <span id="rental-days" class="fw-bold">1</span> days
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card border-primary">
+                            <div class="card-header bg-light-primary">
+                                <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i> Payment Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <label class="form-label fw-bold">Advance Payment</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.advance_payment }}
+                                    </div>
+                                    {% if form.advance_payment.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.advance_payment.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-between fw-bold fs-5">
+                                    <div>Balance Due:</div>
+                                    <div id="balance-due" class="text-success">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg py-3 px-4 fw-bold" id="submit-button">
+                        <i class="bi bi-check-circle me-2"></i> Create Rental Agreement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // API endpoints
+    const CUSTOMER_API = "{% url 'customer_api' 0 %}".replace('/0/', '/');
+    const PRODUCT_API = "{% url 'product_api' 0 %}".replace('/0/', '/');
+    
+    // Function to update customer details when customer changes
+    const customerSelect = document.getElementById('id_customer');
+    if (customerSelect) {
+        customerSelect.addEventListener('change', function() {
+            const customerId = this.value;
+            if (customerId) {
+                fetch(`${CUSTOMER_API}${customerId}/`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Customer not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.getElementById('customer-name').textContent = data.name;
+                        document.getElementById('customer-email').textContent = data.email || '-';
+                        document.getElementById('customer-phone').textContent = data.phone || '-';
+                        document.getElementById('customer-discount').innerHTML = 
+                            `<span class="badge bg-primary py-2 px-3">Discount: ${data.discount_rate || 0}%</span>`;
+                        document.getElementById('id_discount').value = data.discount_rate || 0;
+                        calculateTotals();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching customer details:', error);
+                        resetCustomerDetails();
+                    });
+            } else {
+                resetCustomerDetails();
+            }
+        });
+        
+        // Initialize if customer is pre-selected
+        if (customerSelect.value) {
+            customerSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    function resetCustomerDetails() {
+        document.getElementById('customer-name').textContent = 'No customer selected';
+        document.getElementById('customer-email').textContent = '-';
+        document.getElementById('customer-phone').textContent = '-';
+        document.getElementById('customer-discount').innerHTML = 
+            '<span class="badge bg-primary py-2 px-3">Discount: 0%</span>';
+        document.getElementById('id_discount').value = 0;
+        calculateTotals();
+    }
+
+    // Calculate rental days between dates
+    function getRentalDays() {
+        const startDate = new Date(document.getElementById('id_start_date').value);
+        const endDate = new Date(document.getElementById('id_expected_return_date').value);
+        
+        if (startDate && endDate && startDate <= endDate) {
+            const diffTime = Math.abs(endDate - startDate);
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        }
+        return 1;
+    }
+
+    // Update product info when product changes
+    function updateProductInfo(selectElement) {
+        const productId = selectElement.value;
+        const formGroup = selectElement.closest('.rental-item-form');
+        const stockCount = formGroup.querySelector('.stock-count');
+        const availableCount = formGroup.querySelector('.available-count');
+        const quantityInput = formGroup.querySelector('[name$="-quantity"]');
+        const rentalPriceInput = formGroup.querySelector('[name$="-rental_price"]');
+        
+        if (productId) {
+            fetch(`${PRODUCT_API}${productId}/`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Product not found');
+                    return response.json();
+                })
+                .then(data => {
+                    // Update stock information
+                    stockCount.textContent = data.stock;
+                    stockCount.className = 'badge ' + (data.stock > 0 ? 'bg-secondary' : 'bg-danger');
+                    availableCount.textContent = data.available_stock;
+                    availableCount.className = 'badge ' + (data.available_stock > 0 ? 'bg-success' : 'bg-danger');
+                    
+                    // Set max quantity to available stock
+                    if (quantityInput) {
+                        quantityInput.max = data.available_stock;
+                        if (quantityInput.value > data.available_stock || quantityInput.value === "") {
+                            quantityInput.value = data.available_stock > 0 ? 1 : 0;
+                        }
+                    }
+                    
+                    // Auto-populate rental price from product model
+                    if (rentalPriceInput) {
+                        rentalPriceInput.value = data.rental_price.toFixed(2);
+                    }
+                    
+                    calculateItemTotal(formGroup);
+                    validateForm();
+                })
+                .catch(error => {
+                    console.error('Error fetching product details:', error);
+                    stockCount.textContent = '0';
+                    stockCount.className = 'badge bg-danger';
+                    availableCount.textContent = '0';
+                    availableCount.className = 'badge bg-danger';
+                    if (quantityInput) quantityInput.max = 0;
+                    if (rentalPriceInput) rentalPriceInput.value = '0.00';
+                    calculateItemTotal(formGroup);
+                    validateForm();
+                });
+        } else {
+            stockCount.textContent = '0';
+            stockCount.className = 'badge bg-secondary';
+            availableCount.textContent = '0';
+            availableCount.className = 'badge bg-secondary';
+            if (quantityInput) quantityInput.max = 0;
+            if (rentalPriceInput) rentalPriceInput.value = '0.00';
+            calculateItemTotal(formGroup);
+            validateForm();
+        }
+    }
+
+    // Calculate total for a single item
+    function calculateItemTotal(formGroup) {
+        const productSelect = formGroup.querySelector('[name$="-product"]');
+        const quantityInput = formGroup.querySelector('[name$="-quantity"]');
+        const rentalPriceInput = formGroup.querySelector('[name$="-rental_price"]');
+        const itemTotal = formGroup.querySelector('.item-total');
+        
+        if (!productSelect || !productSelect.value) {
+            itemTotal.textContent = '0.00';
+            calculateTotals();
+            return;
+        }
+        
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(rentalPriceInput.value) || 0;
+        const days = getRentalDays();
+        const total = (quantity * price * days).toFixed(2);
+        
+        itemTotal.textContent = total;
+        calculateTotals();
+    }
+
+    // Calculate all totals
+    function calculateTotals() {
+        const days = getRentalDays();
+        document.getElementById('rental-days').textContent = days;
+        
+        let subtotal = 0;
+        let hasValidItems = false;
+        
+        document.querySelectorAll('.rental-item-form').forEach(form => {
+            const productSelect = form.querySelector('[name$="-product"]');
+            const deleteInput = form.querySelector('[name$="-DELETE"]');
+            
+            if (productSelect && productSelect.value && (!deleteInput || deleteInput.value !== 'on')) {
+                const quantity = parseFloat(form.querySelector('[name$="-quantity"]').value) || 0;
+                const price = parseFloat(form.querySelector('[name$="-rental_price"]').value) || 0;
+                subtotal += quantity * price * days;
+                hasValidItems = true;
+            }
+        });
+
+        const discount = parseFloat(document.getElementById('id_discount').value) || 0;
+        const discountAmount = subtotal * (discount / 100);
+        const afterDiscount = subtotal - discountAmount;
+        const vat = afterDiscount * 0.05;
+        const total = afterDiscount + vat;
+
+        // Update display
+        document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+        document.getElementById('discount-amount').textContent = '$' + discountAmount.toFixed(2);
+        document.getElementById('vat-amount').textContent = '$' + vat.toFixed(2);
+        document.getElementById('total-amount').textContent = '$' + total.toFixed(2);
+        
+        // Calculate balance due
+        calculateBalance();
+        
+        return hasValidItems;
+    }
+
+    // Calculate balance due
+    function calculateBalance() {
+        const advance = parseFloat(document.getElementById('id_advance_payment').value) || 0;
+        const total = parseFloat(document.getElementById('total-amount').textContent.replace('$', '')) || 0;
+        const balance = Math.max(0, total - advance).toFixed(2);
+        document.getElementById('balance-due').textContent = '$' + balance;
+    }
+
+    // Validate form before submission
+    function validateForm() {
+        const hasValidItems = calculateTotals();
+        const alertElement = document.getElementById('no-products-alert');
+        const submitButton = document.getElementById('submit-button');
+        
+        // Check if first product is filled
+        const firstProduct = document.querySelector('[name$="0-product"]');
+        const isValid = firstProduct && firstProduct.value;
+        
+        if (!isValid) {
+            alertElement.style.display = 'block';
+            submitButton.disabled = true;
+            submitButton.classList.add('disabled');
+        } else {
+            alertElement.style.display = 'none';
+            submitButton.disabled = false;
+            submitButton.classList.remove('disabled');
+        }
+        
+        return isValid;
+    }
+
+    // Initialize all product selects on page load
+    function initializeProductSelects() {
+        document.querySelectorAll('[id$="-product"]').forEach(select => {
+            if (select.value) {
+                updateProductInfo(select);
+            } else {
+                // Initialize empty product fields
+                const formGroup = select.closest('.rental-item-form');
+                const stockCount = formGroup.querySelector('.stock-count');
+                const availableCount = formGroup.querySelector('.available-count');
+                const rentalPriceInput = formGroup.querySelector('[name$="-rental_price"]');
+                
+                stockCount.textContent = '0';
+                stockCount.className = 'badge bg-secondary';
+                availableCount.textContent = '0';
+                availableCount.className = 'badge bg-secondary';
+                if (rentalPriceInput) rentalPriceInput.value = '0.00';
+            }
+        });
+    }
+
+    // Event delegation for product selects
+    document.getElementById('rental-items').addEventListener('change', function(e) {
+        if (e.target && e.target.matches('[id$="-product"]')) {
+            updateProductInfo(e.target);
+        }
+        
+        if (e.target && (e.target.matches('[id$="-quantity"]') || e.target.matches('[id$="-rental_price"]'))) {
+            const formGroup = e.target.closest('.rental-item-form');
+            calculateItemTotal(formGroup);
+            validateForm();
+        }
+    });
+
+    // Set up event listeners for date changes
+    document.getElementById('id_start_date').addEventListener('change', function() {
+        calculateTotals();
+        validateForm();
+    });
+    document.getElementById('id_expected_return_date').addEventListener('change', function() {
+        calculateTotals();
+        validateForm();
+    });
+    
+    // Set up event listener for discount changes
+    document.getElementById('id_discount').addEventListener('change', function() {
+        calculateTotals();
+        validateForm();
+    });
+    document.getElementById('id_discount').addEventListener('keyup', function() {
+        calculateTotals();
+        validateForm();
+    });
+    
+    // Set up event listener for advance payment changes
+    document.getElementById('id_advance_payment').addEventListener('change', calculateBalance);
+    document.getElementById('id_advance_payment').addEventListener('keyup', calculateBalance);
+
+    // Handle dynamically added forms
+    document.getElementById('add-item').addEventListener('click', function() {
+        const formCount = parseInt(document.getElementById('id_items-TOTAL_FORMS').value);
+        const newForm = document.querySelector('.rental-item-form').cloneNode(true);
+        const newFormHtml = newForm.outerHTML
+            .replace(/items-\d+-/g, `items-${formCount}-`)
+            .replace(/items\.\d+\./g, `items.${formCount}.`)
+            .replace(/value="\d+"/g, 'value=""')
+            .replace(/selected="selected"/g, '');
+        
+        document.getElementById('rental-items').insertAdjacentHTML('beforeend', newFormHtml);
+        document.getElementById('id_items-TOTAL_FORMS').value = formCount + 1;
+        
+        // Clear new form
+        const newFormElement = document.querySelector(`[id$="items-${formCount}-product"]`).closest('.rental-item-form');
+        newFormElement.querySelector('.stock-count').textContent = '0';
+        newFormElement.querySelector('.available-count').textContent = '0';
+        newFormElement.querySelector('.item-total').textContent = '0.00';
+        
+        // Remove required attribute from additional forms
+        const productSelect = newFormElement.querySelector('[name$="-product"]');
+        const quantityInput = newFormElement.querySelector('[name$="-quantity"]');
+        const priceInput = newFormElement.querySelector('[name$="-rental_price"]');
+        
+        if (productSelect) productSelect.removeAttribute('required');
+        if (quantityInput) quantityInput.removeAttribute('required');
+        if (priceInput) priceInput.removeAttribute('required');
+        
+        validateForm();
+    });
+
+    // Handle form removal
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item')) {
+            const form = e.target.closest('.rental-item-form');
+            const deleteInput = form.querySelector('[name$="-DELETE"]');
+            if (deleteInput) {
+                deleteInput.value = 'on';
+                form.style.display = 'none';
+            }
+            validateForm();
+        }
+    });
+
+    // Form submission handler with confirmation
+    document.getElementById('rental-form').addEventListener('submit', function(e) {
+        // First validate the form
+        if (!validateForm()) {
+            e.preventDefault();
+            document.getElementById('no-products-alert').style.display = 'block';
+            window.scrollTo({
+                top: document.getElementById('rental-items').offsetTop,
+                behavior: 'smooth'
+            });
+            return;
+        }
+
+        // Show confirmation dialog
+        e.preventDefault();
+        const form = this;
+        
+        Swal.fire({
+            title: 'Confirm Rental Agreement',
+            html: `
+                <div class="text-start">
+                    <p>Are you sure you want to create this rental agreement?</p>
+                    <div class="mt-3">
+                        <strong>Customer:</strong> ${document.getElementById('customer-name').textContent}<br>
+                        <strong>Total Amount:</strong> ${document.getElementById('total-amount').textContent}<br>
+                        <strong>Balance Due:</strong> ${document.getElementById('balance-due').textContent}
+                    </div>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Create Rental',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // User confirmed, submit the form
+                form.submit();
+            }
+        });
+    });
+
+    // Initialize calculations and validation
+    initializeProductSelects();
+    validateForm();
+});
+</script>
+
+<style>
+    .card {
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+    }
+    .bg-light-primary {
+        background-color: #e3f2fd !important;
+    }
+    .rental-item-form {
+        transition: all 0.3s ease;
+        border-left: 4px solid #0d6efd;
+    }
+    .form-control, .input-group-text {
+        border-radius: 8px;
+        padding: 0.75rem;
+    }
+    .form-control:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+        transform: translateY(-2px);
+    }
+    .page-title {
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+    .badge {
+        padding: 0.5em 0.8em;
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+    .item-total {
+        color: #198754;
+        font-size: 1.1rem;
+    }
+    #total-amount {
+        font-size: 1.4rem;
+    }
+    #balance-due {
+        font-size: 1.4rem;
+    }
+    .remove-item {
+        padding: 0.5rem;
+        border-radius: 50%;
+        height: 38px;
+        width: 38px;
+    }
+    .is-invalid {
+        border-color: #dc3545;
+    }
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
+    }
+    .is-invalid ~ .invalid-feedback {
+        display: block;
+    }
+    #no-products-alert {
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

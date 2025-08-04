@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Invoice #{{ invoice.invoice_number }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Customer Information</h5>
+                    <p>
+                        <strong>{{ invoice.rental_agreement.customer.name }}</strong><br>
+                        {% if invoice.rental_agreement.customer.company %}
+                            {{ invoice.rental_agreement.customer.company }}<br>
+                        {% endif %}
+                        {{ invoice.rental_agreement.customer.email }}<br>
+                        {{ invoice.rental_agreement.customer.phone }}
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <h5>Invoice Details</h5>
+                    <p>
+                        <strong>Issue Date:</strong> {{ invoice.issue_date|date:"M d, Y" }}<br>
+                        <strong>Due Date:</strong> {{ invoice.due_date|date:"M d, Y" }}<br>
+                        <strong>Status:</strong> 
+                        <span class="badge {% if invoice.payment_status == 'paid' %}bg-success{% elif invoice.payment_status == 'partial' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ invoice.get_payment_status_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-responsive mb-4">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-end">Quantity</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in rental.items.all %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td class="text-end">{{ item.quantity }}</td>
+                            <td class="text-end">${{ item.rental_price|floatformat:2 }}</td>
+                            <td class="text-end">${{ item.total_price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Payment Information</h5>
+                    {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                    <td>${{ payment.amount|floatformat:2 }}</td>
+                                    <td>{{ payment.get_payment_method_display }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p>No payments recorded</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <div class="float-end" style="width: 300px;">
+                        <table class="table">
+                            <tr>
+                                <th>Subtotal:</th>
+                                <td class="text-end">${{ rental.subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Discount ({{ rental.discount }}%):</th>
+                                <td class="text-end">-${{ rental.discount_amount|floatformat:2 }}</td>
+                            </tr>
+                            {% if rental.apply_vat %}
+                            <tr>
+                                <th>VAT (5%):</th>
+                                <td class="text-end">${{ rental.vat|floatformat:2 }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Total:</th>
+                                <td class="text-end">${{ invoice.total_amount|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <th>Paid:</th>
+                                <td class="text-end">${{ invoice.paid_amount|floatformat:2 }}</td>
+                            </tr>
+                            <tr class="table-active">
+                                <th>Balance Due:</th>
+                                <td class="text-end">${{ invoice.balance_due|floatformat:2 }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Download PDF
+                </a>
+                <a href="{% url 'process_payment' rental.id %}" class="btn btn-success">
+                    <i class="bi bi-cash"></i> Record Payment
+                </a>
+                <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Invoices
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

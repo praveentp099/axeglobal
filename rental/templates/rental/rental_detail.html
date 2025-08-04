@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load rental_tags %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Rental Agreement #{{ rental.id }}</h1>
+        <a href="{% url 'rental_list' %}" class="btn btn-outline-secondary">Back to Rentals</a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Rental Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Customer Information</h5>
+                    <p><strong>Name:</strong> <a href="{% url 'customer_detail' rental.customer.pk %}">{{ rental.customer.name }}</a></p>
+                    <p><strong>Phone:</strong> {{ rental.customer.phone }}</p>
+                    <p><strong>Email:</strong> {{ rental.customer.email|default:"-" }}</p>
+                    <p><strong>Discount:</strong> {{ rental.discount }}%</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Rental Period</h5>
+                    <p><strong>Start Date:</strong> {{ rental.start_date|date:"F d, Y" }}</p>
+                    <p><strong>Expected Return:</strong> {{ rental.expected_return_date|date:"F d, Y" }}</p>
+                    <p><strong>Actual Return:</strong> {{ rental.actual_return_date|date:"F d, Y"|default:"-" }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            {% if rental.status == 'active' %}bg-success
+                            {% elif rental.status == 'overdue' %}bg-danger
+                            {% elif rental.status == 'returned' %}bg-secondary
+                            {% elif rental.status == 'cancelled' %}bg-warning
+                            {% else %}bg-info{% endif %}">
+                            {{ rental.get_status_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <h5 class="mt-4">Rented Items</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Daily Price</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in rental.items.all %}
+                        <tr>
+                            <td><a href="{% url 'product_detail' item.product.pk %}">{{ item.product.name }}</a></td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.rental_price|floatformat:2 }}</td>
+                            <td>${{ item.total_price|floatformat:2 }}</td>
+                            <td>
+                                {% if item.is_returned %}
+                                <span class="badge bg-success">Returned ({{ item.returned_quantity }})</span>
+                                {% else %}
+                                <span class="badge bg-warning">Rented</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">No items rented for this agreement.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Notes</h5>
+                    <p>{{ rental.notes|default:"No notes" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">Financial Summary</div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>Subtotal:</div>
+                                <div>${{ rental.subtotal|floatformat:2 }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div>Discount ({{ rental.discount }}%):</div>
+                                <div>-${{ rental.subtotal|multiply:rental.discount|divide:100|floatformat:2 }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div>VAT (5%):</div>
+                                <div>${{ rental.vat|floatformat:2 }}</div>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <div>Total:</div>
+                                <div>${{ rental.total|floatformat:2 }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <div>Advance Payment:</div>
+                                <div>${{ rental.advance_payment|floatformat:2 }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2 fw-bold fs-5
+                                {% if rental.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                                <div>Balance Due:</div>
+                                <div>${{ rental.balance_due|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest of the template remains the same -->
+    <!-- ... -->
+
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Payments</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Receipt #</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.payment_date|date:"F d, Y" }}</td>
+                            <td>${{ payment.amount|floatformat:2 }}</td>
+                            <td>{{ payment.get_payment_method_display }}</td>
+                            <td>{{ payment.receipt_number|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No payments recorded for this rental.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {# Matches your urls.py: process_payment #}
+            <a href="{% url 'process_payment' rental.id %}" class="btn btn-primary mt-3">
+                Record Payment
+            </a>
+        </div>
+    </div>
+
+    {% if invoice %}
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Invoice Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+                    <p><strong>Created At:</strong> {{ invoice.created_at|date:"F d, Y H:i" }}</p>
+                    <p><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            {% if invoice.payment_status == 'paid' %}bg-success
+                            {% elif invoice.payment_status == 'partial' %}bg-warning
+                            {% else %}bg-danger{% endif %}">
+                            {{ invoice.get_payment_status_display }}
+                        </span>
+                    </p>
+                    <p><strong>Total Billed:</strong> ${{ invoice.total_amount|floatformat:2 }}</p>
+                </div>
+                <div>
+                    {# Assumed 'invoice_detail' is intended for a detailed HTML view of invoice, if it exists #}
+                    {# Your URLs did not list 'invoice_detail'. If it's not needed, remove this button. #}
+                    {# If you have an accounts app with InvoiceListView, you might link to that or an InvoiceDetailView #}
+                    {# I'll keep it commented out for now as it's not in your provided urls.py #}
+                    {# <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-info me-2"> View Invoice </a> #}
+
+                    {# Matches your urls.py: rental_invoice_pdf #}
+                    <a href="{% url 'rental_invoice_pdf' rental.id %}" class="btn btn-secondary">
+                        Download Invoice PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        {# Matches your urls.py: rental_update #}
+        <a href="{% url 'rental_update' rental.id %}" class="btn btn-warning me-2">Edit Rental</a>
+        {% if rental.status != 'returned' and rental.status != 'cancelled' %}
+            {# Matches your urls.py: rental_return #}
+            <a href="{% url 'rental_return' rental.id %}" class="btn btn-info me-2">Mark All Returned</a>
+        {% endif %}
+        
+        {# Matches your urls.py: rental_agreement_pdf #}
+        <a href="{% url 'rental_agreement_pdf' rental.id %}" class="btn btn-secondary me-2">Download Agreement PDF</a>
+        
+        {# Placeholder for other actions, if needed #}
+    </div>
+
+</div>
+{% endblock %}

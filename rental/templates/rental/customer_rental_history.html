@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">
+            <i class="bi bi-clock-history"></i> Rental History for {{ customer.name }}
+        </h1>
+        <a href="{% url 'customer_detail' customer.id %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Customer
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-list-check"></i> Rental Agreements
+                </div>
+                <div>
+                    <span class="badge bg-primary">{{ rentals.count }} total rentals</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if rentals %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rental ID</th>
+                            <th>Start Date</th>
+                            <th>Return Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Total Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rental in rentals %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'rental_detail' rental.id %}">
+                                    #{{ rental.id }}
+                                </a>
+                            </td>
+                            <td>{{ rental.start_date|date:"M d, Y" }}</td>
+                            <td>
+                                {% if rental.actual_return_date %}
+                                    {{ rental.actual_return_date|date:"M d, Y" }}
+                                {% elif rental.expected_return_date %}
+                                    <span class="text-muted">Expected: {{ rental.expected_return_date|date:"M d, Y" }}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if rental.status == 'active' %}bg-primary
+                                    {% elif rental.status == 'returned' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ rental.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="text-end">${{ rental.total_amount|floatformat:2 }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'rental_detail' rental.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    {% if rental.status == 'active' %}
+                                    <a href="{% url 'rental_return' rental.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-check-circle"></i> Return
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="Rental pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No rental history found for this customer.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-graph-up"></i> Rental Statistics
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-cash-stack"></i> Total Spent
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                ${{ total_spent|default:0|floatformat:2 }}
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle"></i> Completed Rentals
+                            </div>
+                            <span class="badge bg-success rounded-pill">
+                                {{ completed_rentals }}
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-clock"></i> Active Rentals
+                            </div>
+                            <span class="badge bg-warning rounded-pill">
+                                {{ active_rentals }}
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-exclamation-triangle"></i> Overdue Rentals
+                            </div>
+                            <span class="badge bg-danger rounded-pill">
+                                {{ overdue_rentals }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-calendar"></i> Recent Activity
+                </div>
+                <div class="card-body">
+                    {% if recent_activity %}
+                    <div class="list-group">
+                        {% for activity in recent_activity %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if activity.status == 'returned' %}
+                                    <i class="bi bi-check-circle text-success"></i>
+                                    {% elif activity.status == 'overdue' %}
+                                    <i class="bi bi-exclamation-triangle text-danger"></i>
+                                    {% else %}
+                                    <i class="bi bi-clock text-warning"></i>
+                                    {% endif %}
+                                    Rental #{{ activity.id }}
+                                </h6>
+                                <small>{{ activity.start_date|timesince }} ago</small>
+                            </div>
+                            <p class="mb-1">
+                                {{ activity.items.count }} items rented
+                            </p>
+                            <small>${{ activity.total_amount|floatformat:2 }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No recent activity found.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

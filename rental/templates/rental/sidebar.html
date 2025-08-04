@@ -1,0 +1,353 @@
+<!-- <div class="sidebar-menu-wrapper">
+    <ul class="nav flex-column sidebar-menu">
+        <li class="nav-item">
+            <a class="nav-link dashboard-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        
+        <li class="nav-item menu-section" data-section="Inventory">
+            <a class="nav-link section-toggle" data-bs-toggle="collapse" href="#inventoryCollapse">
+                <i class="bi bi-box-seam"></i> Inventory
+                <i class="bi bi-chevron-down float-end section-arrow"></i>
+            </a>
+            <div class="collapse show" id="inventoryCollapse">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'product_list,product_detail,product_create,product_update' %}active{% endif %}" href="{% url 'product_list' %}">
+                            <i class="bi bi-tools"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'generate_barcodes' %}active{% endif %}" href="{% url 'generate_barcodes' %}">
+                            <i class="bi bi-upc-scan"></i> Barcodes
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        
+        <li class="nav-item menu-section" data-section="Customers">
+            <a class="nav-link section-toggle" data-bs-toggle="collapse" href="#customersCollapse">
+                <i class="bi bi-people-fill"></i> Customers
+                <i class="bi bi-chevron-down float-end section-arrow"></i>
+            </a>
+            <div class="collapse show" id="customersCollapse">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'customer_list,customer_detail,customer_create,customer_update' %}active{% endif %}" href="{% url 'customer_list' %}">
+                            <i class="bi bi-person-lines-fill"></i> Customer List
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'customer_create' %}active{% endif %}" href="{% url 'customer_create' %}">
+                            <i class="bi bi-person-plus"></i> Add Customer
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        
+        <li class="nav-item menu-section" data-section="Rentals">
+            <a class="nav-link section-toggle" data-bs-toggle="collapse" href="#rentalsCollapse">
+                <i class="bi bi-clipboard2-check"></i> Rentals
+                <i class="bi bi-chevron-down float-end section-arrow"></i>
+            </a>
+            <div class="collapse show" id="rentalsCollapse">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'rental_list,rental_detail,rental_create' %}active{% endif %}" href="{% url 'rental_list' %}">
+                            <i class="bi bi-file-earmark-text"></i> Rental Agreements
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'rental_create' %}active{% endif %}" href="{% url 'rental_create' %}">
+                            <i class="bi bi-plus-circle"></i> New Rental
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'barcode_scan' %}active{% endif %}" href="{% url 'barcode_scan' %}">
+                            <i class="bi bi-qr-code-scan"></i> Scan Returns
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        
+        <li class="nav-item menu-section" data-section="Reports">
+            <a class="nav-link section-toggle" data-bs-toggle="collapse" href="#reportsCollapse">
+                <i class="bi bi-graph-up"></i> Reports
+                <i class="bi bi-chevron-down float-end section-arrow"></i>
+            </a>
+            <div class="collapse show" id="reportsCollapse">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'product_utilization_report' %}active{% endif %}" href="{% url 'product_utilization_report' %}">
+                            <i class="bi bi-pie-chart"></i> Product Utilization
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'customer_activity_report' %}active{% endif %}" href="{% url 'customer_activity_report' %}">
+                            <i class="bi bi-activity"></i> Customer Activity
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'revenue_report' %}active{% endif %}" href="{% url 'revenue_report' %}">
+                            <i class="bi bi-cash-stack"></i> Revenue Report
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        
+        <li class="nav-item menu-section" data-section="Admin">
+            <a class="nav-link section-toggle" data-bs-toggle="collapse" href="#adminCollapse">
+                <i class="bi bi-gear"></i> Admin
+                <i class="bi bi-chevron-down float-end section-arrow"></i>
+            </a>
+            <div class="collapse show" id="adminCollapse">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'user_profile' %}active{% endif %}" href="{% url 'user_profile' %}">
+                            <i class="bi bi-person-circle"></i> User Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/" target="_blank">
+                            <i class="bi bi-shield-lock"></i> Admin Panel
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<style>
+/* Define a CSS variable for the primary color based on the screenshot's accent color */
+:root {
+    --primary: #ff9f00; /* Bright orange from the screenshot */
+}
+
+.sidebar-menu-wrapper {
+    background: linear-gradient(195deg, #42424a 0%, #191919 100%); /* Adjusted to match screenshot's dark gradient */
+    color: white;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    width: 250px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu {
+    padding: 20px 0;
+    margin: 0;
+}
+
+.sidebar-menu .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 12px 20px;
+    margin: 2px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    text-decoration: none; /* Ensure links don't have underlines */
+}
+
+.sidebar-menu .nav-link:hover {
+    color: white;
+    background-color: rgba(255, 159, 0, 0.2); /* Orange hover with transparency, closer to screenshot */
+}
+
+.sidebar-menu .nav-link.active {
+    color: white;
+    background-color: var(--primary); /* Bright orange for active state, matching screenshot */
+    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14), 
+                0 7px 10px -5px rgba(255, 159, 0, 0.4); /* Orange shadow */
+}
+
+.sidebar-menu .nav-link i {
+    margin-right: 12px;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.menu-section {
+    position: relative;
+}
+
+.menu-section::before {
+    content: attr(data-section);
+    display: block;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 15px 20px 5px 30px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-section:first-child::before {
+    border-top: none;
+    padding-top: 5px;
+}
+
+.menu-section .nav-link {
+    font-weight: 600;
+    margin: 0 10px;
+}
+
+.menu-section .nav-link .section-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.menu-section .nav-link.collapsed .section-arrow {
+    transform: rotate(-90deg);
+}
+
+.sub-menu {
+    padding-left: 20px;
+    list-style: none; /* Remove default list bullets */
+}
+
+.sub-menu .nav-link {
+    padding: 8px 20px 8px 40px;
+    font-size: 0.85rem;
+    position: relative;
+    font-weight: 400;
+    margin: 0 10px;
+}
+
+.sub-menu .nav-link::before {
+    content: "";
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+}
+
+.sub-menu .nav-link.active::before {
+    background: white;
+}
+
+/* Icon colors - adjusted to be more muted, similar to screenshot */
+.dashboard-link i {
+    color: var(--primary); /* Orange from primary variable */
+}
+
+/* Adjusted nth-of-type for menu sections to account for the first <li> being Dashboard */
+.menu-section:nth-of-type(2) i { /* Inventory */
+    color: #88b0ea; /* Lighter Blue */
+}
+
+.menu-section:nth-of-type(3) i { /* Customers */
+    color: #82d688; /* Lighter Green */
+}
+
+.menu-section:nth-of-type(4) i { /* Rentals */
+    color: #ea8a8a; /* Lighter Red */
+}
+
+.menu-section:nth-of-type(5) i { /* Reports */
+    color: #fdd88d; /* Lighter Orange/Yellow */
+}
+
+.menu-section:nth-of-type(6) i { /* Admin */
+    color: #c99ee0; /* Lighter Purple */
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .sidebar-menu-wrapper {
+        width: 220px;
+    }
+    
+    .sidebar-menu .nav-link {
+        padding: 10px 15px;
+    }
+    
+    .sub-menu .nav-link {
+        padding-left: 35px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Persist collapsed state for sidebar sections
+    document.querySelectorAll('.section-toggle').forEach(toggle => {
+        // Restore state on page load
+        const target = toggle.getAttribute('href');
+        const state = localStorage.getItem(target + '_state');
+        const collapseElement = document.querySelector(target);
+
+        if (collapseElement) {
+            // Initialize Bootstrap Collapse without immediately toggling
+            const bsCollapse = new bootstrap.Collapse(collapseElement, { 
+                toggle: false 
+            });
+            
+            if (state === 'collapsed') {
+                bsCollapse.hide();
+                toggle.classList.add('collapsed');
+            } else {
+                bsCollapse.show();
+                toggle.classList.remove('collapsed');
+            }
+        }
+
+        // Save state on click
+        toggle.addEventListener('click', function() {
+            const target = this.getAttribute('href');
+            const isCollapsed = this.classList.contains('collapsed');
+            // Toggle the 'collapsed' class manually for the arrow rotation
+            this.classList.toggle('collapsed'); 
+            localStorage.setItem(target + '_state', this.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        });
+    });
+
+    // Handle active states
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.sidebar-menu .nav-link').forEach(link => {
+        // For sub-menu items, check if current path starts with the link's pathname
+        // This makes them active for any URL under that "parent" route (e.g., /products/1, /products/create)
+        const linkPathname = new URL(link.href, window.location.origin).pathname;
+
+        // Handle the dashboard link specifically if it's the root path
+        const isActiveDashboard = (linkPathname === '/' && currentPath === '/');
+
+        // Check for exact match or startsWith for sub-paths (excluding dashboard's root-only check)
+        const isSubPathActive = (linkPathname !== '/' && currentPath.startsWith(linkPathname));
+
+        // Check if the link's href exactly matches the current URL
+        const isExactMatch = (link.href === window.location.href);
+
+        if (isExactMatch || isActiveDashboard || isSubPathActive) {
+            link.classList.add('active');
+            
+            // Expand parent sections
+            let parentCollapse = link.closest('.collapse');
+            if (parentCollapse) {
+                const bsCollapse = bootstrap.Collapse.getInstance(parentCollapse) || 
+                                   new bootstrap.Collapse(parentCollapse, { toggle: false });
+                bsCollapse.show();
+                
+                const parentToggle = document.querySelector(`[href="#${parentCollapse.id}"]`);
+                if (parentToggle) {
+                    parentToggle.classList.remove('collapsed'); // Ensure parent toggle is not collapsed
+                }
+            }
+        }
+    });
+});
+</script> -->

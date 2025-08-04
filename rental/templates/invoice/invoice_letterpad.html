@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Invoice #{{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            font-size: 12px;
+            color: #333;
+        }
+        header {
+            border-bottom: 2px solid #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+        .company-logo {
+            height: 60px;
+        }
+        .company-details {
+            float: right;
+            text-align: right;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #222;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        table, th, td {
+            border: 1px solid #aaa;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .total-row th, .total-row td {
+            border-top: 2px solid #333;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 5px;
+            text-align: center;
+        }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+</head>
+<body>
+    <header class="clearfix">
+        <div style="float:left">
+            <img src="{{ company_logo_path }}" alt="Company Logo" class="company-logo" style="width:150px; height:auto;"/>
+        </div>
+        <div class="company-details">
+            <h1>Invoice</h1>
+            <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+            <p><strong>Issue Date:</strong> {{ invoice.issue_date }}</p>
+            <p><strong>Due Date:</strong> {{ invoice.due_date }}</p>
+        </div>
+    </header>
+
+    <section>
+        <h2>Customer Details</h2>
+        <p><strong>Name:</strong> {{ invoice.rental_agreement.customer.name }}</p>
+        <p><strong>Company:</strong> {{ invoice.rental_agreement.customer.company }}</p>
+        <p><strong>Email:</strong> {{ invoice.rental_agreement.customer.email }}</p>
+        <p><strong>Phone:</strong> {{ invoice.rental_agreement.customer.phone }}</p>
+    </section>
+
+    <section>
+        <h2>Rental Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Days</th>
+                    <th>Price Per Day</th>
+                    <th>Total Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.rental_agreement.items.all %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ invoice.rental_agreement.rental_days }}</td>
+                    <td>{{ item.rental_price }}</td>
+                    <td>{{ item.total_price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="4" align="right">Subtotal</td>
+                    <td>{{ invoice.rental_agreement.subtotal }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="4" align="right">VAT (5%)</td>
+                    <td>{{ invoice.rental_agreement.vat }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="4" align="right">Discount</td>
+                    <td>{{ invoice.rental_agreement.discount }}%</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="4" align="right">Total</td>
+                    <td>{{ invoice.total_amount }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="4" align="right">Paid</td>
+                    <td>{{ invoice.paid_amount }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="4" align="right">Balance Due</td>
+                    <td>{{ invoice.total_amount|floatformat:2|add:"-{{ invoice.paid_amount }}" }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+
+    <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>Axe Global Equipment Rental & Repair LLC - +971 543582526 - Abu Dhabi, M9</p>
+    </div>
+</body>
+</html>

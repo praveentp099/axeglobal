@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Product Utilization Report</h3>
+        <div class="card-tools">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Rental Count</th>
+                                <th>Total Revenue</th>
+                                <th>Total Expenses</th>
+                                <th>Net Profit</th>
+                                <th>Utilization Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'product_detail' product.id %}">
+                                        {{ product.name }}
+                                    </a>
+                                </td>
+                                <td>{{ product.sku }}</td>
+                                <td>{{ product.rental_count|default:0 }}</td>
+                                <td>${{ product.total_revenue|default:"0.00" }}</td>
+                                <td>${{ product.total_expenses|default:"0.00" }}</td>
+                                <td class="{% if product.net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    ${{ product.net_profit|default:"0.00" }}
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        {% widthratio product.rental_count 10 100 as utilization %}
+                                        <div class="progress-bar 
+                                            {% if utilization > 80 %}bg-success
+                                            {% elif utilization > 50 %}bg-info
+                                            {% elif utilization > 20 %}bg-warning
+                                            {% else %}bg-danger
+                                            {% endif %}" 
+                                            role="progressbar" 
+                                            style="width: {{ utilization }}%" 
+                                            aria-valuenow="{{ utilization }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">
+                                            {{ utilization }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No product data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Profit Distribution</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="profitChart" height="250"></canvas>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4 class="card-title">Top Performers</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for product in products|slice:":5" %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ product.name }}
+                                <span class="badge bg-primary rounded-pill">
+                                    ${{ product.net_profit|default:"0.00" }}
+                                </span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profit Distribution Chart
+    const profitCtx = document.getElementById('profitChart').getContext('2d');
+    const profitData = {
+        labels: [
+            {% for product in products %}
+            "{{ product.name|truncatechars:15 }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for product in products %}
+                {{ product.net_profit|default:0 }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                '#858796', '#5a5c69', '#3a3b45', '#2c3e50', '#1a1a1a'
+            ],
+            hoverBackgroundColor: [
+                '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617',
+                '#6b6d7d', '#4a4c5a', '#2a2b33', '#1c2c3d', '#0d0d0d'
+            ],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }]
+    };
+
+    new Chart(profitCtx, {
+        type: 'doughnut',
+        data: profitData,
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: $${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '70%',
+        }
+    });
+});
+</script>
+{% endblock %}

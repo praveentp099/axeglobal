@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Barcode Scanner</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-upc-scan"></i> Scan Barcode
+        </div>
+        <div class="card-body">
+            <div class="barcode-scanner">
+                <div id="scanner-container" class="text-center">
+                    <video id="scanner-video" width="100%" autoplay playsinline></video>
+                    <canvas id="scanner-canvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <button id="start-scan" class="btn btn-primary">
+                        <i class="bi bi-camera"></i> Start Scanner
+                    </button>
+                    <button id="stop-scan" class="btn btn-danger" style="display: none;">
+                        <i class="bi bi-stop-circle"></i> Stop Scanner
+                    </button>
+                </div>
+                
+                <div id="scan-result" class="mt-4 text-center" style="display: none;">
+                    <h4>Scan Result</h4>
+                    <div id="product-info" class="alert alert-info"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('scanner-video');
+    const canvas = document.getElementById('scanner-canvas');
+    const startBtn = document.getElementById('start-scan');
+    const stopBtn = document.getElementById('stop-scan');
+    const scanResult = document.getElementById('scan-result');
+    const productInfo = document.getElementById('product-info');
+    
+    let stream = null;
+    let scanning = false;
+    
+    // Start scanner
+    startBtn.addEventListener('click', async function() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment' 
+                } 
+            });
+            video.srcObject = stream;
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'inline-block';
+            scanning = true;
+            scan();
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            alert("Could not access the camera. Please ensure you have granted camera permissions.");
+        }
+    });
+    
+    // Stop scanner
+    stopBtn.addEventListener('click', function() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            startBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            scanning = false;
+        }
+    });
+    
+    // Scan function
+    function scan() {
+        if (!scanning) return;
+        
+        // Draw video frame to canvas
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Here you would normally use a barcode scanning library
+        // For demo purposes, we'll simulate a scan
+        setTimeout(() => {
+            // Simulate finding a barcode
+            const product = {
+                name: "Demo Product",
+                sku: "1234567890",
+                price: "$49.99"
+            };
+            
+            scanResult.style.display = 'block';
+            productInfo.innerHTML = `
+                <strong>Product:</strong> ${product.name}<br>
+                <strong>SKU:</strong> ${product.sku}<br>
+                <strong>Price:</strong> ${product.price}
+            `;
+            
+            // In a real implementation, you would:
+            // 1. Use a library like QuaggaJS or Dynamsoft to read the barcode
+            // 2. Make an AJAX call to your backend to get product info
+            // 3. Display the product information
+            
+        }, 2000);
+        
+        // Continue scanning
+        if (scanning) {
+            requestAnimationFrame(scan);
+        }
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

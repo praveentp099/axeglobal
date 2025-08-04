@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Customer Activity Report</h3>
+        <div class="card-tools">
+            <form method="get" class="form-inline">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" 
+                           placeholder="Search name, phone or company..." 
+                           name="search"
+                           value="{{ search_query|default:'' }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                <a href="{% url 'customer_activity_report' %}" class="btn btn-outline-secondary ml-2">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </a>
+                <button class="btn btn-primary ml-2" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Company</th>
+                                <th>Phone</th>
+                                <th>Total Rentals</th>
+                                <th>Active Rentals</th>
+                                <th>Total Spent</th>
+                                <th>Avg. Rental</th>
+                                <th>Last Rental</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'customer_detail' customer.id %}">
+                                        {{ customer.name }}
+                                    </a>
+                                </td>
+                                <td>{{ customer.company|default:"-" }}</td>
+                                <td>{{ customer.phone|default:"-" }}</td>
+                                <td>{{ customer.template_data.rental_count }}</td>
+                                <td>{{ customer.template_data.active_rentals }}</td>
+                                <td>${{ customer.template_data.total_spent|floatformat:2 }}</td>
+                                <td>
+                                    {% if customer.template_data.rental_count > 0 %}
+                                    ${{ customer.template_data.avg_rental|floatformat:2 }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if customer.template_data.last_rental %}
+                                    {{ customer.template_data.last_rental|date:"Y-m-d" }}
+                                    {% else %}
+                                    Never
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    {% if search_query %}
+                                    No customers found matching "{{ search_query }}"
+                                    {% else %}
+                                    No customer data available
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Spending Distribution</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="spendingChart" height="250"></canvas>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4 class="card-title">Top Customers</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for customer in customers|slice:":5" %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ customer.name|truncatechars:20 }}
+                                <span class="badge bg-primary rounded-pill">
+                                    ${{ customer.template_data.total_spent|floatformat:2 }}
+                                </span>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No customers found</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Spending Distribution Chart
+    const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+    const spendingData = {
+        labels: JSON.parse('{{ chart_labels|escapejs }}'),
+        datasets: [{
+            label: 'Total Spent',
+            data: {{ chart_data|safe }},
+            backgroundColor: '#4e73df',
+            hoverBackgroundColor: '#2e59d9',
+            borderColor: '#4e73df',
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(spendingCtx, {
+        type: 'bar',
+        data: spendingData,
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

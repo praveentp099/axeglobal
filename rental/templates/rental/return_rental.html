@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-truck-loading me-2"></i>
+                Process Rental Return #{{ rental.id }}
+            </h5>
+            <span class="badge bg-light text-dark">
+                {{ rental.get_status_display }}
+            </span>
+        </div>
+
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Error:</strong> Please correct the errors below.
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <div>{{ field|title }}: {{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Customer and Rental Info -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-user me-2"></i>Customer Details</h5>
+                    <p><strong>Name:</strong> {{ rental.customer.name }}</p>
+                    <p><strong>Company:</strong> {{ rental.customer.company|default:"-" }}</p>
+                    <p><strong>Start Date:</strong> {{ rental.start_date|date:"M. j, Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-calendar-alt me-2"></i>Rental Dates</h5>
+                    <p><strong>Expected Return:</strong> {{ rental.expected_return_date|date:"M. j, Y" }}</p>
+                    <p><strong>Today:</strong> {{ today|date:"M. j, Y" }}</p>
+                    <p class="{% if overdue_days > 0 %}text-danger{% endif %}">
+                        <strong>Overdue Days:</strong> {{ overdue_days }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Rental Calculation -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="mb-0">Rental Calculation</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Original Rental Period:</td>
+                                    <td>{{ rental.start_date|date:"M. j, Y" }} to {{ rental.expected_return_date|date:"M. j, Y" }} ({{ original_rental_days }} days)</td>
+                                </tr>
+                                <tr>
+                                    <td>Original Daily Rate:</td>
+                                    <td>${{ daily_rate|floatformat:2 }} (Total: ${{ original_total|floatformat:2 }})</td>
+                                </tr>
+                                <tr>
+                                    <td>Actual Rental Period:</td>
+                                    <td>{{ rental.start_date|date:"M. j, Y" }} to <span id="actualReturnDate">{{ today|date:"M. j, Y" }}</span> (<span id="actualRentalDays">{{ rental_days }}</span> days)</td>
+                                </tr>
+                                <tr>
+                                    <td>Base Rental Amount:</td>
+                                    <td>$ <span id="baseRentalAmount">{{ base_amount|floatformat:2 }}</span></td>
+                                </tr>
+                                {% if rental.discount > 0 %}
+                                <tr>
+                                    <td>Discount ({{ rental.discount }}%):</td>
+                                    <td>-$ <span id="discountAmount">{{ discount_amount|floatformat:2 }}</span></td>
+                                </tr>
+                                {% endif %}
+                                {% if rental.apply_vat %}
+                                <tr>
+                                    <td>VAT (5%):</td>
+                                    <td>$ <span id="vatAmount">{{ vat_amount|floatformat:2 }}</span></td>
+                                </tr>
+                                {% endif %}
+                                <tr class="table-active">
+                                    <th>Actual Total:</th>
+                                    <th>$ <span id="actualTotal">{{ actual_total|floatformat:2 }}</span></th>
+                                </tr>
+                                <tr>
+                                    <td>Advance Payment:</td>
+                                    <td>-${{ advance_payment|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <th>Balance Due:</th>
+                                    <th>${{ balance_due|floatformat:2 }}</th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Items to Return -->
+            <h5 class="mb-3"><i class="fas fa-boxes me-2"></i>Items to Return</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Return Condition</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                            <input type="text" 
+                                   name="condition_{{ item.id }}" 
+                                   id="id_condition_{{ item.id }}" 
+                                   class="form-control"
+                                   value="{{ posted_data|get_item:'condition_'|add:item.id|stringformat:'s'|default:'' }}"
+                                   required>
+                        </td>
+                        <td>
+                            <textarea name="notes_{{ item.id }}" 
+                                      id="id_notes_{{ item.id }}" 
+                                      class="form-control" 
+                                      rows="2">{{ posted_data|get_item:'notes_'|add:item.id|stringformat:'s'|default:'' }}</textarea>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <hr>
+
+            <!-- Return Form -->
+            <form method="post" id="returnForm">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- Return Date -->
+                         <div class="mb-3">
+                        <label for="id_return_date" class="form-label">
+                            <i class="fas fa-calendar-day me-2"></i>Return Date
+                        </label>
+                        <input type="date" 
+                            class="form-control" 
+                            id="id_return_date"
+                            name="return_date"  
+                            value="{{ form.return_date.value|default:'' }}"
+                            min="{{ rental.start_date|date:'Y-m-d' }}"
+                            max="{{ today|date:'Y-m-d' }}"
+                            required>
+                        {% if form.return_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.return_date.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                        <!-- Payment Details -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">Payment Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="{{ form.payment_method.id_for_label }}" class="form-label">{{ form.payment_method.label }}</label>
+                                    {{ form.payment_method }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.amount_to_collect.id_for_label }}" class="form-label">{{ form.amount_to_collect.label }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.amount_to_collect }}
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Amount to collect based on actual return date.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <!-- Return Summary -->
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">Return Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <strong>Selected Return Date:</strong>
+                                    <span id="selectedReturnDateDisplay" class="fw-bold">{{ today|date:"M. j, Y" }}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Actual Rental Days:</strong>
+                                    <span id="actualDaysDisplay">{{ rental_days }}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Amount Due:</strong>
+                                    <span id="amountDueDisplay">${{ balance_due|floatformat:2 }}</span>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    All changes will be finalized when you click "Complete Return"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'rental_detail' rental.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times-circle me-2"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check-circle me-2"></i> Complete Return
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/moment.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all required elements
+    const returnDateInput = document.getElementById('id_return_date');
+    const amountInput = document.getElementById('id_amount_to_collect');
+    const actualReturnDateSpan = document.getElementById('actualReturnDate');
+    const actualRentalDaysSpan = document.getElementById('actualRentalDays');
+    const baseRentalAmountSpan = document.getElementById('baseRentalAmount');
+    const discountAmountSpan = document.getElementById('discountAmount');
+    const vatAmountSpan = document.getElementById('vatAmount');
+    const actualTotalSpan = document.getElementById('actualTotal');
+    const selectedReturnDateDisplay = document.getElementById('selectedReturnDateDisplay');
+    const actualDaysDisplay = document.getElementById('actualDaysDisplay');
+    const amountDueDisplay = document.getElementById('amountDueDisplay');
+
+    // Constants from template
+    const originalTotal = parseFloat("{{ original_total }}");
+    const originalRentalDays = parseInt("{{ original_rental_days }}");
+    const originalDailyRate = originalTotal / originalRentalDays;
+    const advancePayment = parseFloat("{{ advance_payment }}");
+    const discountRate = parseFloat("{{ rental.discount }}");
+    const applyVat = {% if rental.apply_vat %}true{% else %}false{% endif %};
+    const startDate = new Date('{{ rental.start_date|date:"Y-m-d" }}');
+
+    // Format date for display
+    function formatDate(date) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    // Update all calculations when return date changes
+    function updateCalculations() {
+        if (!returnDateInput.value) return;
+
+        const returnDate = new Date(returnDateInput.value);
+        const today = new Date();
+
+        // Set minimum date to start date and maximum to today
+        returnDateInput.min = '{{ rental.start_date|date:"Y-m-d" }}';
+        returnDateInput.max = today.toISOString().split('T')[0];
+
+        // Calculate days difference (+1 to include both dates)
+        const timeDiff = returnDate - startDate;
+        const daysDiff = Math.max(1, Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1);
+
+        // Calculate new amounts based on original daily rates
+        const baseAmount = originalDailyRate * daysDiff;
+        const discountAmount = baseAmount * (discountRate / 100);
+        const subtotal = baseAmount - discountAmount;
+        const vatAmount = applyVat ? subtotal * 0.05 : 0;
+        const total = subtotal + vatAmount;
+        const balanceDue = Math.max(0, total - advancePayment);
+
+        // Update display fields
+        actualReturnDateSpan.textContent = formatDate(returnDate);
+        actualRentalDaysSpan.textContent = daysDiff;
+        baseRentalAmountSpan.textContent = baseAmount.toFixed(2);
+
+        if (discountRate > 0) {
+            discountAmountSpan.textContent = discountAmount.toFixed(2);
+        }
+
+        if (applyVat) {
+            vatAmountSpan.textContent = vatAmount.toFixed(2);
+        }
+
+        actualTotalSpan.textContent = total.toFixed(2);
+        selectedReturnDateDisplay.textContent = formatDate(returnDate);
+        actualDaysDisplay.textContent = daysDiff;
+        amountDueDisplay.textContent = '$' + balanceDue.toFixed(2);
+
+        // Update amount to collect field
+        amountInput.value = balanceDue.toFixed(2);
+    }
+
+    // Initialize date picker and calculations
+    if (returnDateInput) {
+        // Set initial date to today if not already set
+        if (!returnDateInput.value) {
+            const today = new Date();
+            returnDateInput.value = today.toISOString().split('T')[0];
+        }
+
+        // Add event listener for date changes
+        returnDateInput.addEventListener('change', updateCalculations);
+
+        // Run initial calculation
+        updateCalculations();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,891 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AxeGlobal Equipment Rental{% endblock %}</title>
+<link rel="icon" type="image/png" href="{% static 'images/axelogo.png' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --primary: #1a73e8; /* Google Blue for active/hover */
+            --primary-light: #e8f0fe; /* Light blue for active background */
+            --primary-dark: #0f4dbd; /* Darker blue */
+            --background: #f0f3f6; /* Light grey background */
+            --text: #3c4043; /* Dark grey for main text */
+            --text-light: #70757a; /* Medium grey for secondary text */
+            --sidebar-bg: #ffffff; /* White for sidebar background */
+            --sidebar-border: #e0e0e0; /* Light border for sidebar */
+            --sidebar-item-hover: #f0f0f0; /* Light grey for item hover */
+            --icon-color: #5f6368; /* Grey for default icons */
+            --top-navbar-bg: #2c3e50; /* Keep your existing deep charcoal blue for top navbar */
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Google Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--top-navbar-bg); /* Use specific variable for top navbar */
+            color: white;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand i {
+            margin-right: 8px;
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
+            padding: 0.4rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            background-color: var(--primary); /* Primary Blue on hover/active */
+            color: white !important;
+        }
+
+        .dropdown-menu {
+            border: 1px solid var(--sidebar-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .dropdown-item {
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--sidebar-item-hover);
+            color: var(--text);
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            color: var(--icon-color);
+        }
+
+        .page-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        /* --- Sidebar Specific Styles - Mimicking the image --- */
+        .sidebar-wrapper {
+            width: 280px; /* Wider to match the image */
+            background-color: var(--sidebar-bg); /* White background */
+            color: var(--text);
+            height: calc(100vh - 72px); /* Adjust height to account for fixed navbar */
+            position: sticky;
+            top: 0; /* Align to the top, under the navbar */
+            overflow-y: auto;
+            padding: 16px;
+            margin-top: 16px; /* Space from top navbar */
+            margin-left: 16px; /* Space from left edge */
+            border-radius: 16px; /* Rounded corners for the card-like effect */
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Push user info to bottom */
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Allows menu to take available space */
+        }
+
+        .sidebar-menu-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px 16px 16px;
+            border-bottom: 1px solid var(--sidebar-border); /* Separator line */
+            margin-bottom: 16px;
+        }
+
+        .sidebar-menu-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+        }
+
+        .sidebar-menu-header .company-info {
+            flex-grow: 1;
+        }
+
+        .sidebar-menu-header .company-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .sidebar-menu-header .company-tagline {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .sidebar-menu-header .dropdown-toggle {
+            background: none;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.2rem;
+            padding: 0 4px;
+            cursor: pointer;
+        }
+
+        .sidebar-menu .nav-item {
+            margin-bottom: 4px; /* Spacing between menu items */
+        }
+
+        .sidebar-menu .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px; /* Adjusted padding to match image */
+            margin: 0 8px; /* Margin from sidebar edge */
+            border-radius: 8px; /* Slightly rounded corners for items */
+            color: var(--text); /* Default text color */
+            font-weight: 500;
+            font-size: 0.92rem;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-left-color 0.2s ease-in-out;
+            position: relative; /* For the active border */
+            text-decoration: none;
+        }
+
+        .sidebar-menu .nav-link i {
+            margin-right: 16px; /* Space between icon and text */
+            font-size: 1.2rem; /* Icon size */
+            color: var(--icon-color); /* Default icon color */
+            width: 24px; /* Ensure consistent icon alignment */
+            text-align: center;
+        }
+
+        .sidebar-menu .nav-link:hover {
+            background-color: var(--sidebar-item-hover); /* Light grey hover */
+            color: var(--text);
+        }
+
+        /* Active state for sidebar menu items */
+        .sidebar-menu .nav-link.active {
+            background-color: var(--primary-light); /* Light blue background */
+            color: var(--primary); /* Blue text */
+            font-weight: 600;
+        }
+
+        .sidebar-menu .nav-link.active i {
+            color: var(--primary); /* Blue icon for active */
+        }
+
+        .sidebar-menu .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px; /* Blue border width */
+            height: 70%; /* Blue border height */
+            background-color: var(--primary); /* Blue border color */
+            border-radius: 0 4px 4px 0; /* Rounded top/bottom on right */
+        }
+
+        /* Collapsible Section Specifics */
+        .menu-section-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            /* Inherit nav-link styling */
+            padding: 10px 16px;
+            margin: 0 8px;
+            border-radius: 8px;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.92rem;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+
+        .menu-section-toggle:hover {
+            background-color: var(--sidebar-item-hover);
+        }
+
+        .menu-section-toggle i:first-child { /* Icon before text */
+            margin-right: 16px;
+            font-size: 1.2rem;
+            color: var(--icon-color);
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-section-toggle .section-arrow {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: var(--icon-color);
+            opacity: 0; /* Hidden by default */
+            visibility: hidden; /* Hidden by default */
+        }
+
+        /* Show chevron on hover of the toggle button/link */
+        .menu-section-toggle:hover .section-arrow,
+        .menu-section-toggle.active .section-arrow, /* Show if parent is active (its child is active) */
+        .menu-section-toggle[aria-expanded="true"] .section-arrow { /* Show if expanded */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .menu-section-toggle.collapsed .section-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .sub-menu {
+            list-style: none;
+            padding-left: 0; /* Remove default padding */
+            margin-top: 4px; /* Space from parent toggle */
+        }
+
+        .sub-menu .nav-item {
+            margin-bottom: 2px; /* Less space for sub-items */
+        }
+
+        .sub-menu .nav-link {
+            padding: 8px 16px 8px 52px; /* Indent sub-menu items */
+            font-size: 0.85rem;
+            font-weight: 400;
+            margin: 0 8px; /* Match parent's horizontal margin */
+            position: relative;
+        }
+        
+        /* Sub-menu bullet point */
+        .sub-menu .nav-link::before {
+            content: "";
+            position: absolute;
+            left: 32px; /* Position bullet */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px; /* Size of bullet */
+            height: 5px;
+            background-color: var(--text-light); /* Grey bullet */
+            border-radius: 50%;
+        }
+
+        .sub-menu .nav-link.active::before {
+            background-color: var(--primary); /* Blue bullet when active */
+        }
+
+        /* Notification badge */
+        .notification-badge {
+            background-color: #5cb85c; /* Green color for badge */
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 7px;
+            border-radius: 12px;
+            margin-left: auto; /* Push to the right */
+        }
+        
+        /* Sidebar User Profile Section */
+        .sidebar-user-profile {
+            padding-top: 16px;
+            margin-top: 16px;
+            border-top: 1px solid var(--sidebar-border); /* Separator line */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+        }
+
+        .sidebar-user-profile .user-info {
+            flex-grow: 1;
+        }
+
+        .sidebar-user-profile .user-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .sidebar-user-profile .user-email {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .sidebar-user-profile .settings-icon {
+            background: none;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.2rem;
+            padding: 0 4px;
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .sidebar-user-profile .settings-icon:hover {
+            color: var(--primary);
+        }
+
+        /* --- Main Content Area --- */
+        .main-content-wrapper {
+            flex-grow: 1;
+            padding: 2rem;
+            background-color: var(--background);
+            color: var(--text);
+            margin-left: 20px; /* Space between sidebar and main content */
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--sidebar-border); /* Light border */
+            padding-bottom: 0.75rem;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--sidebar-border);
+            border-radius: 0.75rem; /* More rounded corners */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08); /* Stronger shadow */
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: var(--primary); /* Primary Blue card header */
+            color: white;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+            border-bottom: 1px solid var(--primary-dark);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.2rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 0.5rem;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .table th {
+            background-color: var(--primary); /* Primary Blue table header */
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5; /* Very light grey for table hover */
+        }
+
+        .footer {
+            background-color: var(--top-navbar-bg); /* Match top navbar */
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-top: auto;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 991.98px) {
+            .page-wrapper {
+                flex-direction: column;
+            }
+            .sidebar-wrapper {
+                position: static;
+                width: auto;
+                height: auto;
+                max-height: 400px; /* Limit height on smaller screens if content is too long */
+                margin: 16px;
+            }
+            .main-content-wrapper {
+                margin-left: 0;
+                padding-top: 1rem;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="bi bi-gear-wide-connected"></i> AxeGlobal
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'financial' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'financial_dashboard' %}">
+                        <i class="bi bi-graph-up"></i> Financials
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> {{ request.user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'user_profile' %}"><i class="bi bi-person"></i> Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="page-wrapper">
+    <aside class="sidebar-wrapper d-print-none">
+        <div> {% load static %}
+            <div class="sidebar-menu-header">
+                <img src="{% static 'images/axelogo.png' %}" alt="Star Events Logo"> {# Replace with your actual logo path #}
+                <div class="company-info">
+                    <div class="company-name">Axe Global</div>
+                    <div class="company-tagline">Equipment Rentals</div>
+                </div>
+                <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#">Option 1</a></li>
+                    <li><a class="dropdown-item" href="#">Option 2</a></li>
+                </ul>
+            </div>
+
+            <ul class="nav flex-column sidebar-menu">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-grid-fill"></i> Dashboard
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link menu-section-toggle" data-bs-toggle="collapse" href="#inventoryCollapse" role="button" aria-expanded="false" aria-controls="inventoryCollapse">
+                        <i class="bi bi-box-seam"></i> Inventory
+                        <i class="bi bi-chevron-down float-end section-arrow"></i>
+                    </a>
+                    <div class="collapse" id="inventoryCollapse">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'product_list' == request.resolver_match.url_name or 'product_detail' == request.resolver_match.url_name or 'product_create' == request.resolver_match.url_name or 'product_update' == request.resolver_match.url_name %}active{% endif %}" href="{% url 'product_list' %}">
+                                    Products
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'generate_barcodes' %}active{% endif %}" href="{% url 'generate_barcodes' %}">
+                                    Barcodes
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link menu-section-toggle" data-bs-toggle="collapse" href="#customersCollapse" role="button" aria-expanded="false" aria-controls="customersCollapse">
+                        <i class="bi bi-people-fill"></i> Customers
+                        <i class="bi bi-chevron-down float-end section-arrow"></i>
+                    </a>
+                    <div class="collapse" id="customersCollapse">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'customer_list' == request.resolver_match.url_name or 'customer_detail' == request.resolver_match.url_name or 'customer_update' == request.resolver_match.url_name %}active{% endif %}" href="{% url 'customer_list' %}">
+                                    Customer List
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'customer_create' %}active{% endif %}" href="{% url 'customer_create' %}">
+                                    Add Customer
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link menu-section-toggle" data-bs-toggle="collapse" href="#rentalsCollapse" role="button" aria-expanded="false" aria-controls="rentalsCollapse">
+                        <i class="bi bi-clipboard2-check"></i> Rentals
+                        <i class="bi bi-chevron-down float-end section-arrow"></i>
+                    </a>
+                    <div class="collapse" id="rentalsCollapse">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'rental_list' == request.resolver_match.url_name or 'rental_detail' == request.resolver_match.url_name %}active{% endif %}" href="{% url 'rental_list' %}">
+                                    Rental Agreements
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'rental_create' %}active{% endif %}" href="{% url 'rental_create' %}">
+                                    New Rental
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'barcode_scan' %}active{% endif %}" href="{% url 'barcode_scan' %}">
+                                    Scan Returns
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                <a class="nav-link menu-section-toggle" data-bs-toggle="collapse" href="#expensesCollapse" role="button" aria-expanded="false" aria-controls="expensesCollapse">
+                    <i class="bi bi-cash-stack"></i> Expenses
+                    <i class="bi bi-chevron-down float-end section-arrow"></i>
+                </a>
+                <div class="collapse" id="expensesCollapse">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'expense_list' == request.resolver_match.url_name or 'expense_detail' == request.resolver_match.url_name %}active{% endif %}" href="{% url 'expense_list' %}">
+                                Expense Records
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'expense_create' %}active{% endif %}" href="{% url 'expense_create' %}">
+                                Add Expense
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'expense_category_list' %}active{% endif %}" href="{% url 'expense_category_list' %}">
+                                Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'expense_report' %}active{% endif %}" href="{% url 'expense_report' %}">
+                                Expense Report
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link menu-section-toggle" data-bs-toggle="collapse" href="#reportsCollapse" role="button" aria-expanded="false" aria-controls="reportsCollapse">
+                        <i class="bi bi-graph-up"></i> Reports
+                        <i class="bi bi-chevron-down float-end section-arrow"></i>
+                    </a>
+                    <div class="collapse" id="reportsCollapse">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'product_utilization_report' %}active{% endif %}" href="{% url 'product_utilization_report' %}">
+                                    Product Utilization
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'customer_activity_report' %}active{% endif %}" href="{% url 'customer_activity_report' %}">
+                                    Customer Activity
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'revenue_report' %}active{% endif %}" href="{% url 'revenue_report' %}">
+                    Revenue Report
+                </a>
+            </li>
+                        </ul>
+                    </div>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link menu-section-toggle" data-bs-toggle="collapse" href="#adminCollapse" role="button" aria-expanded="false" aria-controls="adminCollapse">
+                        <i class="bi bi-gear"></i> Admin
+                        <i class="bi bi-chevron-down float-end section-arrow"></i>
+                    </a>
+                    <div class="collapse" id="adminCollapse">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'user_profile' %}active{% endif %}" href="{% url 'user_profile' %}">
+                                    User Profile
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/" target="_blank">
+                                    Admin Panel
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'notification_page' %}active{% endif %}" href="#"> {# Replace # with your notification URL #}
+                        <i class="bi bi-bell"></i> Notification <span class="notification-badge">5</span>
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'documents_page' %}active{% endif %}" href="#"> {# Replace # with your documents URL #}
+                        <i class="bi bi-file-earmark-text"></i> Documents
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'help_page' %}active{% endif %}" href="#"> {# Replace # with your help URL #}
+                        <i class="bi bi-question-circle"></i> Help
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-user-profile">
+            <img src="{% static 'images/user_avatar.png' %}" alt="User Avatar"> {# Replace with your user avatar path #}
+            <div class="user-info">
+                <div class="user-name">{{ request.user.username }}</div>
+                <div class="user-email">{{ request.user.email }}</div> {# Assuming user has an email attribute #}
+            </div>
+            <button class="settings-icon" onclick="window.location.href='{% url 'user_profile' %}'"> {# Link to user profile #}
+                <i class="bi bi-gear"></i>
+            </button>
+        </div>
+    </aside>
+    <main class="main-content-wrapper">
+        <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; {% now "Y" %} AxeGlobal Equipment Rental. All rights reserved.</p>
+        <p>v1.0.0</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_js %}{% endblock %}
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all collapsible sections as collapsed on load
+    document.querySelectorAll('.collapse').forEach(collapseEl => {
+        const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+        bsCollapse.hide();
+        const toggleBtn = document.querySelector(`[href="#${collapseEl.id}"]`);
+        if (toggleBtn) {
+            toggleBtn.classList.add('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Handle active states for sidebar links and expand parent sections
+    document.querySelectorAll('.sidebar-menu .nav-link').forEach(link => {
+        const currentPath = window.location.pathname;
+        const linkPathname = new URL(link.href, window.location.origin).pathname;
+
+        // Determine if the link should be active based on the current URL
+        const isDashboardRoot = (linkPathname === '/' && currentPath === '/');
+        const isExactMatch = (link.href === window.location.href);
+        const isSubPathActive = (linkPathname !== '/' && currentPath.startsWith(linkPathname) && 
+                               (currentPath.length === linkPathname.length || currentPath[linkPathname.length] === '/'));
+
+        if (isExactMatch || isDashboardRoot || isSubPathActive) {
+            link.classList.add('active');
+            
+            // If this is a sub-menu link and it's active, expand its parent collapse
+            let parentCollapse = link.closest('.collapse');
+            if (parentCollapse) {
+                const bsCollapse = bootstrap.Collapse.getInstance(parentCollapse) || 
+                                 new bootstrap.Collapse(parentCollapse, { toggle: false });
+                bsCollapse.show();
+                
+                // Also ensure the parent toggle button/link is updated (not collapsed)
+                const parentToggle = document.querySelector(`[href="#${parentCollapse.id}"]`);
+                if (parentToggle) {
+                    parentToggle.classList.remove('collapsed');
+                    parentToggle.setAttribute('aria-expanded', 'true');
+                }
+            }
+        } else {
+            link.classList.remove('active');
+        }
+    });
+
+    // Custom Accordion behavior: Collapse others when one expands
+    document.querySelectorAll('.menu-section-toggle').forEach(toggleBtn => {
+        toggleBtn.addEventListener('click', function(event) {
+            const targetId = this.getAttribute('href');
+            
+            // Collapse all other expandable sections
+            document.querySelectorAll('.collapse').forEach(collapseEl => {
+                if ('#' + collapseEl.id !== targetId) {
+                    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || 
+                                     new bootstrap.Collapse(collapseEl, { toggle: false });
+                    if (collapseEl.classList.contains('show')) {
+                        bsCollapse.hide();
+                        const otherToggle = document.querySelector(`[href="#${collapseEl.id}"]`);
+                        if (otherToggle) {
+                            otherToggle.classList.add('collapsed');
+                            otherToggle.setAttribute('aria-expanded', 'false');
+                        }
+                    }
+                }
+            });
+
+            // Toggle the clicked section's state
+            const targetCollapseEl = document.querySelector(targetId);
+            const bsCollapse = bootstrap.Collapse.getInstance(targetCollapseEl) || 
+                             new bootstrap.Collapse(targetCollapseEl, { toggle: false });
+            
+            if (targetCollapseEl.classList.contains('show')) {
+                bsCollapse.hide();
+                this.classList.add('collapsed');
+                this.setAttribute('aria-expanded', 'false');
+            } else {
+                bsCollapse.show();
+                this.classList.remove('collapsed');
+                this.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+
+    // Initialize all collapsible sections as collapsed on load
+    document.querySelectorAll('.collapse').forEach(collapseEl => {
+        const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+        bsCollapse.hide();
+        const toggleBtn = document.querySelector(`[href="#${collapseEl.id}"]`);
+        if (toggleBtn) {
+            toggleBtn.classList.add('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Handle active states for sidebar links and expand parent sections
+    document.querySelectorAll('.sidebar-menu .nav-link').forEach(link => {
+        const linkPathname = new URL(link.href, window.location.origin).pathname;
+
+        // Determine if the link should be active based on the current URL
+        const isDashboardRoot = (linkPathname === '/' && currentPath === '/');
+        const isExactMatch = (link.href === window.location.href);
+        const isSubPathActive = (linkPathname !== '/' && currentPath.startsWith(linkPathname) && 
+                                 (currentPath.length === linkPathname.length || currentPath[linkPathname.length] === '/'));
+
+        if (isExactMatch || isDashboardRoot || isSubPathActive) {
+            link.classList.add('active');
+            
+            // If this is a sub-menu link and it's active, expand its parent collapse
+            let parentCollapse = link.closest('.collapse');
+            if (parentCollapse) {
+                const bsCollapse = bootstrap.Collapse.getInstance(parentCollapse) || 
+                                   new bootstrap.Collapse(parentCollapse, { toggle: false });
+                bsCollapse.show();
+                
+                // Also ensure the parent toggle button/link is updated (not collapsed)
+                const parentToggle = document.querySelector(`[href="#${parentCollapse.id}"]`);
+                if (parentToggle) {
+                    parentToggle.classList.remove('collapsed');
+                    parentToggle.setAttribute('aria-expanded', 'true');
+                    parentToggle.classList.add('active'); // Optionally make parent active too
+                }
+            }
+        } else {
+            link.classList.remove('active');
+        }
+    });
+
+    // Custom Accordion behavior: Collapse others when one expands
+    document.querySelectorAll('.menu-section-toggle').forEach(toggleBtn => {
+        toggleBtn.addEventListener('click', function(event) {
+            const targetId = this.getAttribute('href'); // e.g., #inventoryCollapse
+            
+            // Collapse all other expandable sections
+            document.querySelectorAll('.collapse').forEach(collapseEl => {
+                if ('#' + collapseEl.id !== targetId) {
+                    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || 
+                                       new bootstrap.Collapse(collapseEl, { toggle: false });
+                    if (collapseEl.classList.contains('show')) { // Only hide if it's currently open
+                        bsCollapse.hide();
+                        const otherToggle = document.querySelector(`[href="#${collapseEl.id}"]`);
+                        if (otherToggle) {
+                            otherToggle.classList.add('collapsed');
+                            otherToggle.setAttribute('aria-expanded', 'false');
+                        }
+                    }
+                }
+            });
+
+            // Toggle the clicked section's state
+            const targetCollapseEl = document.querySelector(targetId);
+            const bsCollapse = bootstrap.Collapse.getInstance(targetCollapseEl) || 
+                               new bootstrap.Collapse(targetCollapseEl, { toggle: false });
+            
+            // Manually toggle the collapse and update the button state
+            if (targetCollapseEl.classList.contains('show')) {
+                bsCollapse.hide();
+                this.classList.add('collapsed');
+                this.setAttribute('aria-expanded', 'false');
+            } else {
+                bsCollapse.show();
+                this.classList.remove('collapsed');
+                this.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+});
+</script>

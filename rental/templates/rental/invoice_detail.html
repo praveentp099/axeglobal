@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Invoice #{{ invoice.invoice_number }}</h1>
+        <a href="{% url 'rental_detail' invoice.rental_agreement.id %}" class="btn btn-outline-secondary">Back to Rental</a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Invoice Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>From:</h5>
+                    <p><strong>Your Company Name</strong><br>
+                    123 Business Street<br>
+                    City, State 12345<br>
+                    Tax ID: 123456789</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>To:</h5>
+                    <p><strong>{{ invoice.rental_agreement.customer.name }}</strong><br>
+                    {{ invoice.rental_agreement.customer.address|default:"No address provided" }}<br>
+                    {{ invoice.rental_agreement.customer.phone }}<br>
+                    {{ invoice.rental_agreement.customer.email|default:"" }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Invoice Date:</strong> {{ invoice.issue_date }}</p>
+                    <p><strong>Due Date:</strong> {{ invoice.due_date }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Status:</strong> <span class="badge bg-{{ invoice.payment_status == 'paid' ? 'success' : invoice.payment_status == 'partial' ? 'warning' : 'danger' }}">{{ invoice.get_payment_status_display }}</span></p>
+                    <p><strong>Rental Period:</strong> {{ invoice.rental_agreement.start_date }} to {{ invoice.rental_agreement.expected_return_date }}</p>
+                </div>
+            </div>
+
+            <hr>
+
+            <h5 class="mt-4">Items</h5>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Daily Price</th>
+                        <th>Days</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.rental_agreement.items.all %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.rental_price }}</td>
+                        <td>{{ invoice.rental_agreement.rental_days }}</td>
+                        <td>${{ item.total_price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5>Notes</h5>
+                    <p>{{ invoice.rental_agreement.notes|default:"No notes" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Summary</div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>Subtotal:</div>
+                                <div>${{ invoice.rental_agreement.subtotal }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div>Discount ({{ invoice.rental_agreement.discount }}%):</div>
+                                <div>-${{ invoice.rental_agreement.subtotal|multiply:invoice.rental_agreement.discount|divide:100 }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div>VAT (5%):</div>
+                                <div>${{ invoice.rental_agreement.vat }}</div>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold">
+                                <div>Total:</div>
+                                <div>${{ invoice.total_amount }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <div>Paid Amount:</div>
+                                <div>${{ invoice.paid_amount }}</div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2 fw-bold text-success">
+                                <div>Balance Due:</div>
+                                <div>${{ invoice.total_amount|subtract:invoice.paid_amount }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button class="btn btn-primary" onclick="window.print()">Print Invoice</button>
+        <a href="{% url 'process_payment' invoice.rental_agreement.id %}" class="btn btn-success">Record Payment</a>
+    </div>
+</div>
+{% endblock %}

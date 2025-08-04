@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">Revenue Report</h1>
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="exportBtn">
+                <i class="bi bi-download"></i> Export to Excel
+            </button>
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-funnel"></i> Report Filters
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Period</label>
+                    <select class="form-select" name="period">
+                        <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+                        <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+                        <option value="quarterly" {% if period == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                        <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Yearly</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-graph-up"></i> Revenue Report
+            </div>
+            <div>
+                <span class="badge bg-primary">Period: {{ period|title }}</span>
+                <span class="badge bg-secondary ms-2">
+                    {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="revenueTrendChart"></canvas>
+            </div>
+            
+            <div class="table-responsive mt-4">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th class="text-end">Rental Revenue</th>
+                            <th class="text-end">Sales Revenue</th>
+                            <th class="text-end">Total Revenue</th>
+                            <th class="text-end">Avg. Daily Revenue</th>
+                            <th class="text-end">% Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in report_data %}
+                        <tr>
+                            <td>{{ row.period }}</td>
+                            <td class="text-end">${{ row.rental_revenue|floatformat:2 }}</td>
+                            <td class="text-end">${{ row.sales_revenue|floatformat:2 }}</td>
+                            <td class="text-end">${{ row.total_revenue|floatformat:2 }}</td>
+                            <td class="text-end">${{ row.avg_daily|floatformat:2 }}</td>
+                            <td class="text-end {% if row.percent_change > 0 %}text-success{% elif row.percent_change < 0 %}text-danger{% endif %}">
+                                {% if row.percent_change > 0 %}+{% endif %}{{ row.percent_change|floatformat:1 }}%
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No revenue data available for selected period</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="fw-bold">
+                        <tr>
+                            <td>Total</td>
+                            <td class="text-end">${{ totals.rental|floatformat:2 }}</td>
+                            <td class="text-end">${{ totals.sales|floatformat:2 }}</td>
+                            <td class="text-end">${{ totals.total|floatformat:2 }}</td>
+                            <td class="text-end">${{ totals.avg_daily|floatformat:2 }}</td>
+                            <td class="text-end {% if totals.percent_change > 0 %}text-success{% elif totals.percent_change < 0 %}text-danger{% endif %}">
+                                {% if totals.percent_change > 0 %}+{% endif %}{{ totals.percent_change|floatformat:1 }}%
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Trend Chart
+    const trendCtx = document.getElementById('revenueTrendChart').getContext('2d');
+    const trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: JSON.parse('{{ trend_labels|escapejs }}'),
+            datasets: [
+                {
+                    label: 'Rental Revenue',
+                    data: {{ rental_data|safe }},
+                    borderColor: '#FF7F00',
+                    backgroundColor: 'rgba(255, 127, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Sales Revenue',
+                    data: {{ sales_data|safe }},
+                    borderColor: '#6610f2',
+                    backgroundColor: 'rgba(102, 16, 242, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.raw.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString('en-US', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Export to Excel
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        // Prepare data
+        const data = [
+            ['Period', 'Rental Revenue', 'Sales Revenue', 'Total Revenue', 'Avg. Daily Revenue', '% Change'],
+            {% for row in report_data %}
+            [
+                '{{ row.period }}',
+                {{ row.rental_revenue }},
+                {{ row.sales_revenue }},
+                {{ row.total_revenue }},
+                {{ row.avg_daily }},
+                {{ row.percent_change }}
+            ],
+            {% endfor %}
+            [
+                'Total',
+                {{ totals.rental }},
+                {{ totals.sales }},
+                {{ totals.total }},
+                {{ totals.avg_daily }},
+                {{ totals.percent_change }}
+            ]
+        ];
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, 'Revenue Report');
+        
+        // Generate file
+        const fileName = 'Revenue_Report_{{ start_date|date:"Ymd" }}_to_{{ end_date|date:"Ymd" }}.xlsx';
+        XLSX.writeFile(wb, fileName);
+    });
+});
+</script>
+{% endblock %}

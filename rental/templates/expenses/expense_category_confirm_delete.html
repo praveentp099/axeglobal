@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Confirm Delete</h3>
+    </div>
+    <div class="card-body">
+        <p>Are you sure you want to delete the category "{{ object.get_name_display }}"?</p>
+        <p>This will affect {{ object.expense_set.count }} expense records.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Delete
+            </button>
+            <a href="{% url 'expense_category_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

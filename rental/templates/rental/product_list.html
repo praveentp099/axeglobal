@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">Product Inventory</h1>
+        <div>
+            <a href="{% url 'product_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add Product
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light">
+            <div>
+                <i class="bi bi-tools me-2"></i> Equipment List (Newest First)
+            </div>
+            <form method="get" class="d-flex">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="Search products..." value="{{ request.GET.q }}">
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>SKU</th>
+                            <th>Type</th>
+                            <th>Condition</th>
+                            <th class="text-end">Purchase Price</th>
+                            <th class="text-end">Investment Value</th>
+                            <th class="text-end">Rental Price</th>
+                            <th class="text-center">Total Stock</th>
+                            <th class="text-center">Available</th>
+                            <th class="text-center">Rented</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <a href="{% url 'product_detail' product.id %}" class="fw-bold">
+                                    {{ product.name }}
+                                    {% if not product.is_rentable %}
+                                    <span class="badge bg-warning text-dark ms-2">Not Rentable</span>
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td>{{ product.sku|default:"-" }}</td>
+                            <td>
+                                {% if product.is_outsourced %}
+                                <span class="badge bg-info">Outsourced</span>
+                                {% else %}
+                                <span class="badge bg-primary">Owned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if product.condition == 'new' %}bg-success
+                                    {% elif product.condition == 'excellent' %}bg-primary
+                                    {% elif product.condition == 'good' %}bg-info
+                                    {% elif product.condition == 'fair' %}bg-warning
+                                    {% elif product.condition == 'poor' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ product.get_condition_display }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                {% if product.purchase_price %}
+                                    ${{ product.purchase_price|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-end fw-bold">
+                                {% if product.is_outsourced %}
+                                -
+                                {% else %}
+                                ${{ product.investment_value|floatformat:2 }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end">${{ product.effective_rental_price|floatformat:2 }}</td>
+                            <td class="text-center">{{ product.stock }}</td>
+                            <td class="text-center fw-bold {% if product.available_stock <= 0 %}text-danger{% endif %}">
+                                {{ product.available_stock }}
+                            </td>
+                            <td class="text-center">{{ product.rented_count }}</td>
+                            <td class="text-center">
+                                {% if product.available_stock > 0 %}
+                                <span class="badge bg-success">In Stock</span>
+                                {% elif product.stock > 0 %}
+                                <span class="badge bg-warning text-dark">All Rented</span>
+                                {% else %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'product_update' product.id %}" class="btn btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="13" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                                    <p class="mt-2">No products found</p>
+                                    <a href="{% url 'product_create' %}" class="btn btn-primary mt-2">
+                                        <i class="bi bi-plus-circle"></i> Add Your First Product
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if is_paginated %}
+            <nav aria-label="Product pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-left"></i> Previous</span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next <i class="bi bi-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

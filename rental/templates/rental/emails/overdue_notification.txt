@@ -1,0 +1,28 @@
+Subject: Overdue Equipment - Rental #{{ rental.id }}
+
+Dear {{ customer.name }},
+
+Our records show that your rental equipment (Rental #{{ rental.id }}) 
+was due to be returned on {{ rental.expected_return_date|date:"F j, Y" }} 
+and is now {{ days_overdue }} days overdue.
+
+Rental Details:
+- Start Date: {{ rental.start_date|date:"F j, Y" }}
+- Due Date: {{ rental.expected_return_date|date:"F j, Y" }}
+- Current Overdue: {{ days_overdue }} days
+- Items: 
+{% for item in rental.items.all %}
+  - {{ item.product.name }} (Qty: {{ item.quantity }})
+{% endfor %}
+
+Please return the equipment immediately to avoid additional charges. 
+Your current overdue fees are ${{ overdue_fees|floatformat:2 }}.
+
+If you have already returned the equipment, please disregard this notice. 
+Otherwise, contact us immediately at (555) 123-4567 to make arrangements.
+
+Failure to return the equipment may result in additional fees and account suspension.
+
+Sincerely,
+The AxeGlobal Team
+www.axeglobal.com
