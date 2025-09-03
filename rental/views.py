@@ -59,8 +59,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             purchase_price__isnull=False,
             stock__gt=0
         )
-        context['product_investment'] = sum(p.investment_value for p in owned_products)
-        context['investment_change'] = 5  # Example
+        context['product_investment'] = owned_products.aggregate(
+            total_investment=Sum('purchase_price')
+        )['total_investment'] or 0 # Example
 
         # NEW PAYMENT-BASED REVENUE CALCULATION
         def get_payment_revenue(year, month):
